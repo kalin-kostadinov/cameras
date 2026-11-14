@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111418">
+    <title th:text="${title} + ' · Cameras'">Cameras</title>
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="manifest" th:href="@{/manifest.webmanifest}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header th:fragment="nav" class="topbar">
+    <a class="brand" th:href="@{/}">● Cameras</a>
+    <nav>
+        <a th:href="@{/}">Live</a>
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}">Admin</a>
+        <form th:action="@{/logout}" method="post" class="inline">
+            <button type="submit" class="link" sec:authentication="name">user</button>
+        </form>
+    </nav>
+</header>
+
+<nav th:fragment="adminnav" class="subnav">
+    <a th:href="@{/admin/users}">Users</a>
+    <a th:href="@{/admin/groups}">Groups</a>
+    <a th:href="@{/admin/cameras}">Cameras</a>
+    <a th:href="@{/admin/audit}">Audit log</a>
+</nav>
+
+<div th:fragment="flash">
+    <p class="flash ok" th:if="${message}" th:text="${message}"></p>
+    <p class="flash err" th:if="${error}" th:text="${error}"></p>
+</div>
+
+</body>
+</html>

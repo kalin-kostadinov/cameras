@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Cameras')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <nav th:replace="~{fragments :: adminnav}"></nav>
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <table>
+        <thead><tr><th>Name</th><th>MediaMTX path</th><th>Sub-stream</th><th>Location</th><th>Order</th><th>Status</th></tr></thead>
+        <tbody>
+        <tr th:each="c : ${cameras}">
+            <td><a th:href="@{/admin/cameras/{id}(id=${c.id})}" th:text="${c.name}">Camera</a></td>
+            <td><code th:text="${c.slug}">slug</code></td>
+            <td><code th:text="${c.subStreamPath} ?: '—'">sub</code></td>
+            <td th:text="${c.location}">HOME</td>
+            <td th:text="${c.sortOrder}">0</td>
+            <td><span class="badge" th:classappend="${c.enabled} ? '' : 'off'"
+                      th:text="${c.enabled} ? 'enabled' : 'disabled'">enabled</span></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Add camera</h2>
+    <form class="formrow" th:action="@{/admin/cameras}" method="post">
+        <label>MediaMTX path <input name="slug" required pattern="[a-z0-9][a-z0-9-]*" placeholder="home-garage"></label>
+        <label>Name <input name="name" placeholder="Garage"></label>
+        <label>Sub-stream path <input name="subStreamPath" pattern="[a-z0-9][a-z0-9-]*" placeholder="home-garage-sub"></label>
+        <label>Location
+            <select name="location"><option th:each="l : ${locations}" th:value="${l}" th:text="${l}"></option></select>
+        </label>
+        <label>Order <input name="sortOrder" type="number" value="100" style="width:6em"></label>
+        <button type="submit">Add</button>
+    </form>
+    <p class="muted small">The path must match a path in <code>mediamtx.yml</code> on the home server.</p>
+</main>
+</body>
+</html>

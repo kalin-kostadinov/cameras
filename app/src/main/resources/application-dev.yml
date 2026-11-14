@@ -1,0 +1,18 @@
+# Local development: run with SPRING_PROFILES_ACTIVE=dev and start deploy/dev (docker compose).
+# Open the app through Caddy at http://localhost:8000 so /live and /playback work.
+app:
+  authz-secret: dev-authz-secret-change-me-123
+  remember-me-key: dev-remember-me-key-change-me-123
+  admin:
+    username: admin
+    password: admin-dev-password
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+
+spring:
+  thymeleaf:
+    cache: false

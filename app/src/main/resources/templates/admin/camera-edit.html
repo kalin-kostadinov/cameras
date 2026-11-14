@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${camera.name})}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <nav th:replace="~{fragments :: adminnav}"></nav>
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <h1 th:text="${camera.name}">Camera</h1>
+    <p class="muted">MediaMTX path: <code th:text="${camera.slug}">slug</code> (fixed — recordings are stored under it)</p>
+    <form class="stack" th:action="@{/admin/cameras/{id}(id=${camera.id})}" method="post">
+        <label>Name <input name="name" th:value="${camera.name}" required></label>
+        <label>Sub-stream path <input name="subStreamPath" th:value="${camera.subStreamPath}" pattern="[a-z0-9][a-z0-9-]*"></label>
+        <label>Location
+            <select name="location">
+                <option th:each="l : ${locations}" th:value="${l}" th:text="${l}" th:selected="${l == camera.location}"></option>
+            </select>
+        </label>
+        <label>Order <input name="sortOrder" type="number" th:value="${camera.sortOrder}"></label>
+        <label class="check"><input type="checkbox" name="enabled" value="true" th:checked="${camera.enabled}"> Enabled</label>
+        <button type="submit">Save</button>
+    </form>
+</main>
+</body>
+</html>

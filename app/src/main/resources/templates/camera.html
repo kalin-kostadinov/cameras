@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${camera.name})}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <div class="titlebar">
+        <h1 th:text="${camera.name}">Camera</h1>
+        <a class="button" th:if="${canPlayback}"
+           th:href="@{/cameras/{slug}/playback(slug=${camera.slug})}">Recordings</a>
+    </div>
+    <div class="player">
+        <video id="live" controls muted playsinline autoplay
+               th:attr="data-src=${liveBase + '/' + camera.slug + '/index.m3u8'}"></video>
+    </div>
+    <p class="muted small">Live, a few seconds behind real time. Tap the video for full screen.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6/dist/hls.min.js"></script>
+<script th:src="@{/js/live.js}"></script>
+<script>Live.single(document.getElementById('live'));</script>
+</body>
+</html>

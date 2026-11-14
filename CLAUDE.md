@@ -81,8 +81,9 @@ effective**, free/open-source software wherever possible.
    port forwarding and CGNAT doesn't matter. Home server pulls studio camera streams through the
    tunnel (home → VPS → studio Pi → studio LAN). *Alternative:* Tailscale (free tier, even less
    setup, uses a third-party coordinator).
-5. **Live view = HLS** (MediaMTX low-latency HLS, ~1–3 s delay) because it proxies cleanly
-   through Caddy over plain HTTPS. Live grid uses camera **sub-streams** (low bitrate);
+5. **Live view = HLS** (MediaMTX standard fMP4 HLS, ~3–6 s delay) because it proxies cleanly
+   through Caddy over plain HTTPS. Not low-latency HLS: LL-HLS makes many more requests per
+   viewer and every request passes through forward_auth. Live grid uses camera **sub-streams** (low bitrate);
    single-camera view uses the main stream. WebRTC is a later optimisation.
 6. **Recording = continuous main stream**, 1-hour segments, retention **14 days** (tune to disk).
 7. **Studio display reads the camera directly on the studio LAN**, so it keeps working when the
@@ -235,18 +236,41 @@ Build: Maven. Packaged as a Docker image.
   `/list?path=…&start=…&end=…`; click → play via `/playback/get?path=…&start=…&duration=…`
   (MP4 in a `<video>` element); "download clip" button.
 - `/admin/users`, `/admin/groups`, `/admin/cameras`, `/admin/audit`.
-- `GET /internal/authz` — **Caddy forward_auth target**. Reads session cookie and
-  `X-Forwarded-Uri`; extracts the camera path from `/live/{slug}/…` or the `path=` query of
-  `/playback/…`; returns 200 if allowed (records audit event, throttled), else 401/403.
-  Not reachable from the internet except through Caddy's forward_auth.
+- `GET /internal/authz` — **Caddy forward_auth target**. Requires header `X-Authz-Secret`
+  (= `AUTHZ_SECRET`, else 404), reads the session cookie and `X-Forwarded-Uri`; extracts the
+  camera path from `/live/{path}/…` or the single `path=` query param of `/playback/list|get`;
+  returns 200 if allowed (audit event, throttled to 1 per 10 min per user/camera/action),
+  401 if not logged in, 403 otherwise. Caddy also answers 404 for `/internal/*` from outside.
 - `GET /api/status` — camera online state from MediaMTX API `GET /v3/paths/list`.
+
+### Status (Nov 2026)
+Implemented in `app/` (package `bg.kostadinov.cameras`): entities + Flyway `V1__init.sql`
+(seeds the 5 cameras and the Neighbours/Partners groups), form login + remember-me,
+`AccessService`, `AuthzController` + `MediaPathParser`, live grid / single camera (hls.js),
+playback day timeline + clip download (30-min clips), admin pages, audit log, first admin
+from `APP_ADMIN_USERNAME`/`APP_ADMIN_PASSWORD`. UI is English only (Bulgarian TODO).
+Verified end to end (Postgres 16 + MediaMTX + Caddy + fake cameras): login, ACLs, live HLS
+through forward_auth, recordings list/timeline/clip download, instant revocation.
+The JVM runs in UTC (set in `main`); display uses `app.timezone`.
+
+### Running locally
+1. `cd deploy/dev && docker compose up -d` — Postgres, MediaMTX with 5 fake cameras
+   (ffmpeg test patterns, 1-minute recording segments), Caddy on :8000.
+2. Run the app with profile `dev` (`SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run` in `app/`,
+   or an IntelliJ run config). Dev secrets/admin are in `application-dev.yml`.
+3. Open **http://localhost:8000** (through Caddy, so /live and /playback work), log in as
+   `admin` / `admin-dev-password`.
+
+Required env vars in production: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `AUTHZ_SECRET` (≥24 chars,
+same value in Caddy), `REMEMBER_ME_KEY` (≥24 chars), `APP_ADMIN_PASSWORD` (first start only),
+`MEDIAMTX_API_URL` / `MEDIAMTX_PLAYBACK_URL` (e.g. `http://10.10.0.2:9997` / `:9996`).
 
 ### Conventions
 - Package by feature: `camera`, `user`, `access`, `playback`, `audit`, `admin`, `security`.
 - MediaMTX base URLs in `application.yml` (`mediamtx.api-url`, `mediamtx.playback-url`),
   secrets via env vars, never committed.
-- Tests: JUnit 5 + Testcontainers (Postgres); unit-test the authz path parsing thoroughly
-  (it is the security boundary).
+- Tests: JUnit 5; `MediaPathParserTest` and `AuthzControllerTest` cover the security boundary —
+  extend them whenever URL handling changes. Testcontainers (Postgres) for repository tests later.
 
 ---
 
@@ -271,7 +295,8 @@ api: yes
 apiAddress: :9997
 hls: yes
 hlsAddress: :8888
-hlsVariant: lowLatency
+hlsVariant: fmp4
+hlsSegmentDuration: 1s
 playback: yes
 playbackAddress: :9996
 
@@ -303,10 +328,14 @@ paths:
 `deploy/vps/Caddyfile`:
 ```
 cams.example.com {
+    handle /internal/* {
+        respond 404
+    }
     @media path /live/* /playback/*
     handle @media {
         forward_auth localhost:8080 {
             uri /internal/authz
+            header_up X-Authz-Secret {env.AUTHZ_SECRET}
         }
         handle_path /live/* {
             reverse_proxy 10.10.0.2:8888

@@ -1,0 +1,31 @@
+{
+	auto_https off
+	admin off
+}
+
+# Same routing as production, without TLS. The app runs on the host at :8080.
+:8000 {
+	# Never expose the authz endpoint publicly.
+	handle /internal/* {
+		respond 404
+	}
+
+	@media path /live/* /playback/*
+	handle @media {
+		# Ask the app whether this browser session may see this camera.
+		forward_auth host.docker.internal:8080 {
+			uri /internal/authz
+			header_up X-Authz-Secret {env.AUTHZ_SECRET}
+		}
+		handle_path /live/* {
+			reverse_proxy mediamtx:8888
+		}
+		handle_path /playback/* {
+			reverse_proxy mediamtx:9996
+		}
+	}
+
+	handle {
+		reverse_proxy host.docker.internal:8080
+	}
+}
