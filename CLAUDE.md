@@ -249,6 +249,9 @@ Implemented in `app/` (package `bg.kostadinov.cameras`): entities + Flyway `V1__
 `AccessService`, `AuthzController` + `MediaPathParser`, live grid / single camera (hls.js),
 playback day timeline + clip download (30-min clips), admin pages, audit log, first admin
 from `APP_ADMIN_USERNAME`/`APP_ADMIN_PASSWORD`. UI is English only (Bulgarian TODO).
+Verified end to end (Postgres 16 + MediaMTX + Caddy + fake cameras): login, ACLs, live HLS
+through forward_auth, recordings list/timeline/clip download, instant revocation.
+The JVM runs in UTC (set in `main`); display uses `app.timezone`.
 
 ### Running locally
 1. `cd deploy/dev && docker compose up -d` — Postgres, MediaMTX with 5 fake cameras
