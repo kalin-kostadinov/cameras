@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Audit log')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <nav th:replace="~{fragments :: adminnav}"></nav>
+    <p class="muted small">Latest 300 events. Viewing is recorded at most once per 10 minutes per user, camera and type.</p>
+    <table>
+        <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Camera</th><th>IP</th></tr></thead>
+        <tbody>
+        <tr th:each="e : ${events}">
+            <td th:text="${e.time}">time</td>
+            <td th:text="${e.username}">user</td>
+            <td th:text="${e.action}">LIVE</td>
+            <td th:text="${e.camera}">camera</td>
+            <td th:text="${e.ip}">ip</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

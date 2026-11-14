@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${group.name})}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <nav th:replace="~{fragments :: adminnav}"></nav>
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <form th:action="@{/admin/groups/{id}(id=${group.id})}" method="post">
+        <label class="stack">Group name <input name="name" th:value="${group.name}" required maxlength="64"></label>
+
+        <h2>Cameras</h2>
+        <table>
+            <thead><tr><th>Camera</th><th>Live</th><th>Recordings</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${cameras}" th:with="g=${grants[c.id]}">
+                <td th:text="${c.name}">Camera</td>
+                <td><input type="checkbox" name="live" th:value="${c.id}" th:checked="${g != null and g.canLive}"></td>
+                <td><input type="checkbox" name="playback" th:value="${c.id}" th:checked="${g != null and g.canPlayback}"></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h2>Members</h2>
+        <table>
+            <thead><tr><th>Member</th><th>User</th><th>Name</th></tr></thead>
+            <tbody>
+            <tr th:each="u : ${users}" th:if="${u.role.name() != 'ADMIN'}">
+                <td><input type="checkbox" name="members" th:value="${u.id}" th:checked="${memberIds.contains(u.id)}"></td>
+                <td th:text="${u.username}">user</td>
+                <td th:text="${u.displayName}">Name</td>
+            </tr>
+            </tbody>
+        </table>
+        <p><button type="submit">Save</button></p>
+    </form>
+
+    <h2>Delete</h2>
+    <form th:action="@{/admin/groups/{id}/delete(id=${group.id})}" method="post"
+          onsubmit="return confirm('Delete this group? Its members lose access to its cameras.')">
+        <button type="submit" class="danger">Delete group</button>
+    </form>
+</main>
+</body>
+</html>

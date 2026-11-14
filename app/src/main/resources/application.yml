@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: cameras
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cameras}
+    username: ${DB_USER:cameras}
+    password: ${DB_PASSWORD:cameras}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:true}
+
+server:
+  port: ${PORT:8080}
+  # Caddy sits in front; trust X-Forwarded-* so redirects use https://cams.<domain>
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 12h
+      cookie:
+        secure: ${COOKIE_SECURE:true}
+        same-site: lax
+        http-only: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  timezone: Europe/Sofia
+  # Shared secret Caddy adds to forward_auth calls (header X-Authz-Secret). Required.
+  authz-secret: ${AUTHZ_SECRET:}
+  # Key for signing remember-me cookies. Required.
+  remember-me-key: ${REMEMBER_ME_KEY:}
+  # Public URL prefixes that Caddy proxies to MediaMTX (HLS and playback servers).
+  live-base-path: /live
+  playback-base-path: /playback
+  # First admin is created on startup only if the user table is empty.
+  admin:
+    username: ${APP_ADMIN_USERNAME:admin}
+    password: ${APP_ADMIN_PASSWORD:}
+
+mediamtx:
+  # Internal URLs, reached by the app over WireGuard (prod) or localhost (dev).
+  api-url: ${MEDIAMTX_API_URL:http://localhost:9997}
+  playback-url: ${MEDIAMTX_PLAYBACK_URL:http://localhost:9996}

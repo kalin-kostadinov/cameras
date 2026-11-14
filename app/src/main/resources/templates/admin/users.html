@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Users')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <nav th:replace="~{fragments :: adminnav}"></nav>
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <table>
+        <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+        <tbody>
+        <tr th:each="u : ${users}">
+            <td><a th:href="@{/admin/users/{id}(id=${u.id})}" th:text="${u.username}">user</a></td>
+            <td th:text="${u.displayName}">Name</td>
+            <td th:text="${u.role}">VIEWER</td>
+            <td><span class="badge" th:classappend="${u.enabled} ? '' : 'off'"
+                      th:text="${u.enabled} ? 'active' : 'disabled'">active</span></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2>Add user</h2>
+    <form class="formrow" th:action="@{/admin/users}" method="post">
+        <label>Username <input name="username" required autocapitalize="none"></label>
+        <label>Name <input name="displayName"></label>
+        <label>Password <input name="password" type="password" minlength="10" required autocomplete="new-password"></label>
+        <label>Role
+            <select name="role">
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${r.name() == 'VIEWER'}"></option>
+            </select>
+        </label>
+        <button type="submit">Add</button>
+    </form>
+    <p class="muted small">After adding a viewer, put them in a group (e.g. Neighbours) to give them cameras.</p>
+</main>
+</body>
+</html>

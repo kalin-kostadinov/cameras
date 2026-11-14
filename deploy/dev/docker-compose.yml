@@ -1,0 +1,42 @@
+# Local development stack: Postgres + MediaMTX with 5 fake cameras (ffmpeg test patterns) + Caddy.
+# The Spring Boot app runs on the host (IntelliJ / mvn spring-boot:run) on port 8080 with profile "dev".
+#
+#   cd deploy/dev && docker compose up -d
+#   open http://localhost:8000   (admin / admin-dev-password)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cameras
+      POSTGRES_USER: cameras
+      POSTGRES_PASSWORD: cameras
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest-ffmpeg
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+      - recordings:/recordings
+    ports:
+      - "8554:8554"   # RTSP (e.g. open rtsp://localhost:8554/home-door in VLC)
+      - "8888:8888"   # HLS        — dev only; in production only reachable via Caddy
+      - "9996:9996"   # playback   — the app lists recordings here
+      - "9997:9997"   # control API — the app reads camera status here
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      AUTHZ_SECRET: dev-authz-secret-change-me-123   # must match app.authz-secret (application-dev.yml)
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  pgdata:
+  recordings:

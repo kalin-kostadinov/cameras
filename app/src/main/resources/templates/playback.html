@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${camera.name} + ' recordings')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <div class="titlebar">
+        <h1><a th:href="@{/cameras/{slug}(slug=${camera.slug})}" th:text="${camera.name}">Camera</a> · recordings</h1>
+    </div>
+
+    <form class="daypicker" method="get">
+        <a class="button" th:href="@{/cameras/{slug}/playback(slug=${camera.slug},date=${prevDay})}">‹</a>
+        <input type="date" name="date" th:value="${day}" onchange="this.form.submit()">
+        <a class="button" th:if="${nextDay}" th:href="@{/cameras/{slug}/playback(slug=${camera.slug},date=${nextDay})}">›</a>
+    </form>
+
+    <div id="playback"
+         th:attr="data-path=${camera.slug},data-base=${playbackBase},data-day=${day},data-zone=${zone}">
+
+        <div class="timeline" title="Click a recorded block to play from that point">
+            <div class="hours">
+                <span th:each="h : ${#numbers.sequence(0, 23)}" th:text="${h}"></span>
+            </div>
+            <div class="bar">
+                <button type="button" class="block" th:each="b : ${blocks}"
+                        th:style="'left:' + ${b.leftPercent} + '%;width:' + ${b.widthPercent} + '%'"
+                        th:title="${b.label}"
+                        th:attr="data-start=${b.start},data-seconds=${b.seconds}"></button>
+            </div>
+        </div>
+        <p class="muted" th:if="${#lists.isEmpty(blocks)}">No recordings for this day.</p>
+
+        <div class="jump" th:unless="${#lists.isEmpty(blocks)}">
+            <label>Play from <input type="time" id="jumpTime" step="60"></label>
+            <button type="button" id="jumpBtn">Play</button>
+            <span class="muted small" th:each="b, s : ${blocks}"
+                  th:text="${b.label} + (${s.last} ? '' : ',')"></span>
+        </div>
+
+        <div class="player">
+            <video id="pb" controls playsinline></video>
+        </div>
+        <p class="clipinfo">
+            <span id="clipLabel" class="muted small"></span>
+            <a id="download" class="button" hidden download>Download clip</a>
+        </p>
+    </div>
+</main>
+<script th:src="@{/js/playback.js}"></script>
+</body>
+</html>

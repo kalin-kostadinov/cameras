@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Live')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main>
+    <p class="muted" th:if="${#lists.isEmpty(cameras)}">No cameras are shared with you yet.</p>
+
+    <section class="grid">
+        <article class="tile" th:each="c : ${cameras}">
+            <a class="tile-video" th:href="@{/cameras/{slug}(slug=${c.slug})}">
+                <video muted playsinline autoplay
+                       th:attr="data-src=${liveBase + '/' + c.gridPath() + '/index.m3u8'}"></video>
+            </a>
+            <footer>
+                <span class="dot" th:classappend="${online[c.slug]} ? 'on' : 'off'"
+                      th:attr="data-status=${c.slug}"></span>
+                <a th:href="@{/cameras/{slug}(slug=${c.slug})}" th:text="${c.name}">Camera</a>
+                <span class="muted small" th:text="${c.location}">HOME</span>
+            </footer>
+        </article>
+    </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.6/dist/hls.min.js"></script>
+<script th:src="@{/js/live.js}"></script>
+<script>Live.grid();</script>
+</body>
+</html>
