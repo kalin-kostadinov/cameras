@@ -1,0 +1,17 @@
+# Build
+target/
+build/
+*.class
+# IDE
+.idea/
+*.iml
+.vscode/
+# Secrets / local config
+.env
+*.env
+wg0.conf
+*.key
+*.pem
+application-local.yml
+# Recordings
+recordings/
